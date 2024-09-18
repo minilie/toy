@@ -163,7 +163,6 @@ TEST(erase, one_iter) { // tset one iterator erase
 #undef T_val
 #undef T_cmp
 
-
 #define T_treetype BRTree
 #define T_key long long
 #define T_val int
@@ -172,7 +171,7 @@ TEST(erase, two_iter) { // test range iterator erase
     map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
     T_key x;
     T_val y;
-#define T_case 1000
+#define T_case 10000
     for (int i = 0; i < T_case; i++) {
         x = rand() % 10000;
         y = rand() % 100;
