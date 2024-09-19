@@ -48,11 +48,6 @@ public :
         void *mem = M_pool::Pool_Malloc(pool, sizeof(Node));
         return new(mem) Node(key, val, std::forward<ARGS>(args)...);
     }
-    template<typename T, typename U>
-    static std::pair<T, U> &Cpair(M_pool *pool, T key, U val) {
-        void *mem = M_pool::Pool_Malloc(pool, sizeof(std::pair<T, U>)); 
-        return *(new(mem) std::pair<T, U>(key, val));
-    }
 };
 
 

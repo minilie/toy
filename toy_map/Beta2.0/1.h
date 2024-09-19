@@ -24,11 +24,12 @@ public :
     BRTree (V cmp) : root(MakeNode::Cnode<TreeNode<T, U>, T, U>(this->pool, T(), U(), BLACK)), cmp(cmp), node_cnt(0) {}
     BRTree(const BRTree &obj) : root(MakeNode::Cnode<TreeNode<T, U>, T, U>(this->pool, T(), U(), BLACK)), cmp(obj.cmp), node_cnt(0) {
         for (auto iter = obj.begin(); iter != obj.end(); iter++) {
-            this->insertinter(MakeNode::Cpair<iterator, iterator>(this->pair_pool, iter->first, iter->second));
+            this->insertinter(std::make_pair(iter->first, iter->second));
         }
         return ;
     }
     ~BRTree() {
+        M_pool::DePool(this->pool);
         return ;
     }
 
@@ -39,7 +40,7 @@ public :
     TreeNode<T, U> &operator[](T key) {
         iterator p = this->find(key);
         if (p == this->end()) {
-            std::pair<T, U> k = MakeNode::Cpair<T, U>(this->pair_pool, key, U());
+            std::pair<T, U> k = std::make_pair(key, U());
             return *(this->insert(k).first);
         }
         return *(p);
@@ -178,7 +179,7 @@ RED_UP_MAINTAIN:
         this->root->lchild = insertimple(this->root->lchild, p.first, p.second, insert_succeed, flag);
         this->root->lchild->color = BLACK;
         this->root->lchild->father = this->root; // TAG
-        return MakeNode::Cpair<iterator, bool>(this->pair_pool, insert_succeed, flag);
+        return std::make_pair(insert_succeed, flag);
     }
 
     ptr insertimple(ptr root, T key, U val, iterator &succeed, bool &flag) {
@@ -282,8 +283,7 @@ RED_UP_MAINTAIN:
         else return findimple(root->rchild, key);
     }
 
-    M_pool *pool = M_pool::Creat_Pool(1024);
-    M_pool *pair_pool = M_pool::Creat_Pool(1024);
+    M_pool *pool = M_pool::Creat_Pool(2048);
     mfunction<bool(int, int)> cmp;
     ptr root;
     long long node_cnt;
