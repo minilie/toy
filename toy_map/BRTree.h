@@ -282,7 +282,7 @@ RED_UP_MAINTAIN:
         if (cmp(key, root->key.first)) return findimple(root->lchild, key);
         else return findimple(root->rchild, key);
     }
-
+    
     mfunction<bool(int, int)> cmp;
     ptr root;
     long long node_cnt;

@@ -19,6 +19,7 @@ bool testcomp(map<key, val, CMP, TreeType> &m) {
     return 1;
 }
 
+#define T_case 100000
 #define T_treetype BRTree
 #define T_key long long
 #define T_val int
@@ -27,7 +28,6 @@ TEST(insert, T_treetype) { // test one key insert
     map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
     T_key x;
     T_val y;
-#define T_case 1000
     for (int i = 0; i < T_case; i++) {
         x = rand() % 10000;
         y = rand() % 100;
@@ -36,7 +36,6 @@ TEST(insert, T_treetype) { // test one key insert
     }
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
-#undef T_case
 }
 #undef T_treetype
 #undef T_key
@@ -111,7 +110,6 @@ TEST(erase, key) { // test key erase
     T_key x;
     T_val y;
     std::vector<T_key> keylist;
-#define T_case 1000
     for (int i = 0; i < T_case; i++) {
         x = rand() % 10000;
         y = rand() % 100;
@@ -125,7 +123,6 @@ TEST(erase, key) { // test key erase
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
-#undef T_case
 }
 #undef T_treetype
 #undef T_key
@@ -141,7 +138,6 @@ TEST(erase, one_iter) { // tset one iterator erase
     map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
     T_key x;
     T_val y;
-#define T_case 1000
     for (int i = 0; i < T_case; i++) {
         x = rand() % 10000;
         y = rand() % 100;
@@ -156,7 +152,6 @@ TEST(erase, one_iter) { // tset one iterator erase
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
-#undef T_case
 }
 #undef T_treetype
 #undef T_key
@@ -171,7 +166,6 @@ TEST(erase, two_iter) { // test range iterator erase
     map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
     T_key x;
     T_val y;
-#define T_case 10000
     for (int i = 0; i < T_case; i++) {
         x = rand() % 10000;
         y = rand() % 100;
@@ -185,7 +179,6 @@ TEST(erase, two_iter) { // test range iterator erase
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
-#undef T_case
 }
 #undef T_treetype
 #undef T_key
