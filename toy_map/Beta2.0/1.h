@@ -9,7 +9,6 @@
 #define _1_H
 
 #include "My_functional.h"
-#include "M_Pool.h"
 #include "2.h"
 
 template<typename T, typename U, typename V = std::less<T>>

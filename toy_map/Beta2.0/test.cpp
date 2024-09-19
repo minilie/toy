@@ -22,7 +22,7 @@ bool testcomp(map<key, val, CMP, TreeType> &m) {
 
 
 
-#define T_case 100000
+#define T_case 1000000
 
 #define T_treetype BRTree
 #define T_key long long
