@@ -110,8 +110,6 @@ public :
         return ;
     }
 
-
-
 private :
     void outputimple(ptr root) {
         if (root == NIL) return ;
@@ -284,7 +282,7 @@ RED_UP_MAINTAIN:
     }
 
     M_pool *pool = M_pool::Creat_Pool(2048);
-    mfunction<bool(int, int)> cmp;
+    mfunction<bool(T, U)> cmp;
     ptr root;
     long long node_cnt;
 };

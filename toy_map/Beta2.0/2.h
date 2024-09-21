@@ -19,7 +19,6 @@
 
 template<typename T, typename U>
 struct TreeNode;
-
 class MakeNode;
 
 template<typename T, typename U>
@@ -43,13 +42,12 @@ struct TreeNode {
 
 class MakeNode {
 public :
-    template<typename Node, typename T, typename U, typename ...ARGS>
-    static Node *Cnode(M_pool *pool, T key, U val, ARGS ...args) {
+    template<typename Node, typename ...ARGS>
+    static Node *Cnode(M_pool *pool, ARGS ...args) {
         void *mem = M_pool::Pool_Malloc(pool, sizeof(Node));
-        return new(mem) Node(key, val, std::forward<ARGS>(args)...);
+        return new(mem) Node(std::forward<ARGS>(args)...);
     }
 };
-
 
 template<typename T, typename U, typename Node>
 class IteratorHelper {
