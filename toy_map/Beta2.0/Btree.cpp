@@ -30,9 +30,78 @@ struct BNode {
     BNode<T, U> *next[MAX_M + 1], *father;
 };
 
+
+template<typename T, typename U, bool if_const, typename Node>
+class BIterator; 
+
+template<typename T, typename U, typename Node>
+class BIhelper {
+    using ptr = Node *;
+    using iterator = BIterator<T, U, 0, Node>;
+    using const_iterator = BIterator<T, U, 1, Node>;
+public :
+    static void maketail(ptr p, int posfa, ptr fa) {
+        if (p == nullptr) return ;
+        p->fapos = posfa;
+        p->father = fa;
+        for (int i = 0; i <= p->n; i++) {
+            maketail(p->next[i], i, p);
+        }
+        return ;
+    }
+
+    static iterator get_next(iterator p) {
+        if (p.node->next[p.pos + 1] != nullptr) {
+            Node *temp = p.node->next[p.pos + 1];
+            while (temp->next[0] != nullptr) temp = temp->next[0];
+            return temp;
+        }
+        else if (p.pos < p.node->n - 1) {
+            return iterator(p.node, p.pos + 1);
+        } else {
+            if (p.node->father->next[p.node->fapos + 1] != nullptr) {
+                return iterator(p.node->father, p.node->fapos);
+            } else {
+                Node *temp = p.node;
+                while (temp->father != nullptr && temp->father->next[temp->fapos + 1] == nullptr) temp = temp->father;
+                return iterator(temp->father, temp->fapos);
+            }
+        }
+    }
+};
+
+
+template<typename T, typename U, bool if_const, typename Node>
+class BIterator {
+    using helper = BIhelper<T, U, Node>;
+    using ref = std::conditional_t<if_const, const std::pair<T, U> &, std::pair<T, U> &>;
+    using ptr = std::conditional_t<if_const, const std::pair<T, U> *, std::pair<T, U> *>;
+    using self = BIterator<T, U, if_const, Node>;
+
+public :
+    BIterator(Node *node, int pos = 0) : node(node), pos(pos) {}
+    
+    ptr operator->() {
+        return &((*(*this)).key[this->pos]);
+    }
+    ptr operator->() const {
+        return &((*(*this)).key[this->pos]);
+    }
+
+
+
+
+
+private :
+    Node *node;
+    int pos;
+};
+
+
 template<typename T, typename U, typename V = std::less<T>>
 class BTree {
     using ptr = BNode<T, U> *;
+    using helper = BIhelper<T, U, BNode<T, U> >;
 public :
     BTree() : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(V()) {}
     BTree(V cmp) : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(cmp) {} 
@@ -115,11 +184,115 @@ public :
         return this->root->next[0];
     }
 
+
+    void right_rotate(ptr root, int pos) {
+        for (int i = root->next[pos + 1]->n + 1; i >= 0; i--) {
+            root->next[pos + 1]->key[i] = root->next[pos + 1]->key[i - 1];
+            root->next[pos + 1]->next[i] = root->next[pos + 1]->next[i - 1];
+        }
+        root->next[pos + 1]->key[0] = root->key[pos];
+        root->key[pos] = root->next[pos]->key[root->next[pos]->n - 1];
+        root->next[pos + 1]->next[0] = root->next[pos]->next[root->next[pos]->n];
+        root->next[pos]->next[root->next[pos]->n] = nullptr;
+        root->next[pos + 1]->n += 1;
+        root->next[pos]->n -= 1;
+        return ;
+    }
+
+    void left_rotate(ptr root, int pos) {
+        root->next[pos]->key[root->next[pos]->n] = root->key[pos];
+        root->next[pos]->n += 1;
+        root->key[pos] = root->next[pos + 1]->key[0];
+        root->next[pos]->next[root->next[pos]->n] = root->next[pos + 1]->next[0];
+        for (int i = 0; i < root->next[pos + 1]->n; i++) {
+            root->next[pos + 1]->key[i] = root->next[pos + 1]->key[i + 1];
+            root->next[pos + 1]->next[i] = root->next[pos + 1]->next[i + 1];
+        }
+        root->next[pos + 1]->next[root->next[pos + 1]->n] = nullptr;
+        root->next[pos + 1]->n -= 1;
+        return ;
+    }
+
+    void merge_node(ptr root, int pos) {
+        ptr node = MakeNode::Cnode<BNode<T, U> >(this->pool);
+        for (int i = 0; i <= root->next[pos]->n; i++) {
+            node->key[i] = root->next[pos]->key[i];
+            node->next[i] = root->next[pos]->next[i];
+        }
+        node->n = root->next[pos]->n + 1;
+        node->key[node->n - 1] = root->key[pos];
+        for (int i = 0; i <= root->next[pos + 1]->n; i++) {
+            node->key[node->n + i]  = root->next[pos + 1]->key[i];
+            node->next[node->n + i] = root->next[pos + 1]->next[i];
+        }
+        node->n += root->next[pos + 1]->n;
+        // free(root->next[pos]);
+        // free(root->next[pos + 1]);
+        for (int i = pos + 1; i <= root->n; i++) {
+            root->key[i - 1] = root->key[i];
+            root->next[i - 1] = root->next[i];
+        }
+        root->next[pos] = node;
+        root->n -= 1;
+        return ;
+    }
+
+    ptr erase_balance(ptr root, int pos) {
+        int lower_bound = (MAX_M + 1) / 2 - 1;
+        if (root->next[pos]->n >= lower_bound) return root;
+        if (pos > 0 && root->next[pos - 1]->n > lower_bound) {
+            right_rotate(root, pos - 1);
+        } else if (pos < root->n && root->next[pos + 1]->n > lower_bound) {
+            left_rotate(root, pos);
+        } else {
+            if (pos > 0) merge_node(root, pos - 1); //
+            else merge_node(root, pos);
+        }
+        return root;
+    }
+
+    void erase_pos(ptr root, int pos) {
+        for (int i = pos + 1; i < root->n; i++) {
+            root->key[i - 1] = root->key[i];
+        }
+        root->n -= 1;
+        return ;
+    }
+
+    ptr __erase(ptr root, T val) {
+        if (root == nullptr) return root;
+        int pos = 0;
+        while (pos < root->n && root->key[pos].first < val) pos += 1;
+        if (root->next[0] == nullptr) {
+            if (root->key[pos].first == val) erase_pos(root, pos);
+            return root;
+        } else {
+            if (pos < root->n && root->key[pos].first == val) {
+                ptr temp = root->next[pos];
+                while (temp->next[temp->n]) temp = temp->next[temp->n];
+                swap(root->key[pos], temp->key[temp->n - 1]);
+            }
+            root->next[pos] = __erase(root->next[pos], val);
+        }
+        return erase_balance(root, pos);
+    }
+
+    ptr erase(T val) {
+        this->root->next[0] = __erase(this->root->next[0], val);
+        if (this->root->next[0]->n == 0) {
+            ptr p = this->root->next[0]->next[0];
+            cout << "root -> n == 0" << endl;
+            // free(this->root->next[0]);
+            this->root->next[0] = p;
+        }
+        return this->root->next[0];
+    }
     
     void print_node(ptr root) {
-        printf("%d : ", root->n);
+        printf("%d : \n", root->n);
         for (int i = 0; i < root->n; i++) {
-            printf("%d ", root->key[i].first);
+            int faval = root->father->n == root->fapos ? root->father->key[root->fapos - 1].first : root->father->key[root->fapos].first;
+            printf("%d(fa->val = %d, fapos = %d) \n", root->key[i].first, faval, root->fapos);
         }
         if (root->next[0] == nullptr) goto print_end;
         printf("| [ ");
@@ -142,6 +315,7 @@ public :
     }
     
     void output() {
+        helper::maketail(this->root->next[0], 0, this->root);
         __output(this->root->next[0]);
         return ;
     }
@@ -157,14 +331,20 @@ int main() {
     srand(time(0));
     BTree<int, int> m;
 
-    for (int i = 0; i < 25; i++) {
+    for (int i = 0; i < 10; i++) {
         int x = rand() % 100 + 1;
         int y = rand() % 100;
         m.insert(std::make_pair(x, y));
         printf("insert %d into the tree\n\n", x);
     }
     m.output();
-
+    int p;
+    while (~scanf("%d", &p)) {
+        if (p == -1) break;
+        printf("erase %d from the tree\n\n", p);
+        m.erase(p);
+        m.output();
+    }
 
     return 0;
 }
