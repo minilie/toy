@@ -42,6 +42,7 @@ public :
     }
 
     static iterator get_next(iterator &p) {
+        if (p.node->father == nullptr) return p;
         if (p.node->next[p.pos + 1] != nullptr) {
             Node *temp = p.node->next[p.pos + 1];
             while (temp->next[0] != nullptr) temp = temp->next[0];
@@ -50,6 +51,8 @@ public :
         else if (p.pos < p.node->n - 1) {
             return iterator(p.node, p.pos + 1);
         } else {
+            // std::cout << "======= p->key : " << p.node->key[p.pos].first << "===========" << std::endl;
+            // std::cout << "======= p->father->key : " << p.node->father->key[p.node->fapos].first << "===========" << std::endl;
             if (p.node->fapos < p.node->father->n) {
             // if (p.node->father->next[p.node->fapos + 1] != nullptr) {
                 return iterator(p.node->father, p.node->fapos);
@@ -95,7 +98,7 @@ class BIterator {
     using self = BIterator<T, U, if_const, Node>;
 
 public :
-    BIterator(Node *node, int pos = 0) : node(node), pos(pos) {}
+    BIterator(Node *node = nullptr, int pos = 0) : node(node), pos(pos) {}
 
     Node &operator*() const {
         return *static_cast<Node *>(this->node);
@@ -256,10 +259,15 @@ public :
         return this->root;
     }
 
+    void make() {
+        helper::maketail(this->root->next[0], 0, this->root);
+        return ;
+    }
+
     void output() {
         if (!this->node_cnt) return ;
         helper::maketail(this->root->next[0], 0, this->root);
-        __output(this->root->next[0]);
+        // __output(this->root->next[0]);
         return ;
     }
 

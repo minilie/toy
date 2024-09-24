@@ -519,6 +519,14 @@ private :
     long long node_cnt;
 };
 
+bool testcomp(BTree<int, int> &m) {
+    int firstkey = m.begin()->first;
+    for (auto iter = m.begin().next(); iter != m.end(); iter++) {
+        if (iter->first < firstkey) return 0;
+        firstkey = iter->first;
+    }
+    return 1;
+}
 
 int main() {
     srand(time(0));
@@ -532,7 +540,10 @@ int main() {
     }
     m.output();
     cout << endl << endl << endl;
+    cout << "test ans is : " << testcomp(m) << endl << endl << endl;
+
     int p;
+    
     while (~scanf("%d", &p)) {
         if (p == -1) break;
         printf("find %d from the tree\n\n", p);
