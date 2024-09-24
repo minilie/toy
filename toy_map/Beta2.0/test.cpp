@@ -23,7 +23,7 @@ bool testcomp(map<key, val, CMP, TreeType> &m) {
 #define T_case 10000000 
 
 #define T_treetype BTree
-#define T_key int 
+#define T_key long long 
 #define T_val int
 #define T_cmp std::less<T_key>
 TEST(insert, T_treetype) { // test one key insert
@@ -31,7 +31,7 @@ TEST(insert, T_treetype) { // test one key insert
     T_key x;
     T_val y;
     for (int i = 0; i < T_case; i++) {
-        x = rand() % 100 + 1;
+        x = rand() % 10000;
         y = rand() % 100;
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
