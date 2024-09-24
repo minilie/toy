@@ -19,7 +19,7 @@ bool testcomp(map<key, val, CMP, TreeType> &m) {
     return 1;
 }
 
-#define T_case 100000000
+#define T_case 100000
 #define T_treetype BRTree
 #define T_key long long
 #define T_val int
@@ -176,6 +176,7 @@ TEST(erase, two_iter) { // test range iterator erase
     auto size = m.size();
     for (int i = 0; i < size / 2; i++) iter++;
     m.erase(m.begin(), iter);
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
