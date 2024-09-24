@@ -11,7 +11,7 @@
 #include "2.h"
 #include "My_functional.h"
 
-const int MAX_M = 5;
+const int MAX_M = 15;
 
 template<typename T, typename U>
 struct BNode {
@@ -20,7 +20,6 @@ struct BNode {
     std::pair<T, U> key[MAX_M + 1];
     BNode<T, U> *next[MAX_M + 1], *father;
 };
-
 
 template<typename T, typename U, bool if_const, typename Node>
 class BIterator;
@@ -85,10 +84,7 @@ public :
             }
         }
     }
-
-
 };
-
 
 template<typename T, typename U, bool if_const, typename Node>
 class BIterator {
@@ -210,21 +206,29 @@ public :
     template<typename N>
     std::pair<iterator, bool> insert(N _p) {
         iterator op(nullptr);
+        this->is_dirty = true;
         insertimple(_p, op);
         std::pair<iterator, bool> __p = std::make_pair(op, true);
         return __p;
     }
 
     ptr erase(T key) {
+        this->is_dirty = true;
+        this->make();
         return eraseimple(key);
     }
     ptr erase(iterator iter) {
-        return eraseimple(iter.node->key[iter.pos].first);
+        this->is_dirty = true;
+        return erase(iter.node->key[iter.pos].first);
     }
     ptr erase(iterator itera, iterator iterb) {
+        int cnt = 0;
+        this->make();
         for (auto iter = itera; iter != (iterb.next());) {
             this->erase(iter++);
+            cnt += 1;
         }
+        std::cout << "==-==-=-=- the cnt is : " << cnt << "==-=--=-" << std::endl;
         return this->root->next[0];
     }
 
@@ -241,25 +245,41 @@ public :
 
     iterator begin() {
         if (this->root->next[0] == nullptr) return this->root;
+        if (is_dirty) {
+            is_dirty = false;
+            this->make();
+        }
         ptr p = this->root->next[0];
         while (p->next[0] != nullptr) p = p->next[0];
         return p;
     }
     const_iterator begin() const {
         if (this->root->next[0] == nullptr) return this->root;
+        if (is_dirty) {
+            is_dirty = false;
+            this->make();
+        }
         ptr p = this->root->next[0];
         while (p->next[0] != nullptr) p = p->next[0];
         return p;
     }
 
     iterator end() {
+        if (is_dirty) {
+            is_dirty = false;
+            this->make();
+        }
         return this->root;
     }
     const_iterator end() const {
+        if (is_dirty) {
+            is_dirty = false;
+            this->make();
+        }
         return this->root;
     }
 
-    void make() {
+    inline void make() {
         helper::maketail(this->root->next[0], 0, this->root);
         return ;
     }
@@ -497,6 +517,7 @@ private :
     mfunction<bool(T, U)> cmp;
     ptr root; // virtual root
     long long node_cnt;
+    bool is_dirty;
 };
 
 #endif

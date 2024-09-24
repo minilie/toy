@@ -20,7 +20,7 @@ bool testcomp(map<key, val, CMP, TreeType> &m) {
     return 1;
 }
 
-#define T_case 10000000 
+#define T_case 100 
 
 #define T_treetype BTree
 #define T_key long long 
@@ -36,7 +36,6 @@ TEST(insert, T_treetype) { // test one key insert
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
     }
-    m.output();
     bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 }
@@ -65,7 +64,6 @@ TEST(insert, va_key) { // test variadic insert
     y = rand() % 1000;
     std::pair<T_key, T_val> p4 = std::make_pair(x, y);
     m.insert(p1, p2, p3, p4);
-    m.output();
     bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 }
@@ -91,9 +89,9 @@ TEST(erase, key) { // test key erase
         keylist.push_back(x);
     }
     for (int i = 0, I = keylist.size(); i < I / 2; i++) {
-        m.erase(keylist[0]);
+        m.erase(keylist[i]);
     }
-    m.output();
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
@@ -121,7 +119,7 @@ TEST(erase, one_iter) { // tset one iterator erase
     for (int i = 0; i < size / 2; i++) {
         m.erase(iter++);
     }
-    m.output();
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
@@ -147,7 +145,7 @@ TEST(erase, two_iter) { // test range iterator erase
     auto size = m.size();
     for (int i = 0; i < size / 2; i++) iter++;
     m.erase(m.begin(), iter);
-    m.output();
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 

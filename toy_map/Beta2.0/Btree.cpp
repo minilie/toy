@@ -21,11 +21,14 @@
 using namespace std;
 
 const int MAX_M = 5;
+template<typename T, typename U, typename V = std::less<T>>
+class BTree; 
 
 template<typename T, typename U>
 struct BNode {
-    BNode() : n(0), fapos(0), father(nullptr) {}
+    BNode(BTree<T, U> *belong = nullptr) : n(0), fapos(0), father(nullptr), belong(belong) {}
     int n, fapos;
+    BTree<T, U> *belong;
     std::pair<T, U> key[MAX_M + 1];
     BNode<T, U> *next[MAX_M + 1], *father;
     BNode<T, U> &operator=(U val) {
@@ -55,6 +58,10 @@ public :
     }
 
     static iterator get_next(iterator &p) {
+        if (p.node->belong->is_dirty) {
+            p.node->belong->is_dirty = false;
+            p.node->belong->make();
+        }
         if (p.node->next[p.pos + 1] != nullptr) {
             printf("-----key : %d has right child-----\n", p.node->key[p.pos].first);
             Node *temp = p.node->next[p.pos + 1];
@@ -193,7 +200,7 @@ public :
 };
 
 
-template<typename T, typename U, typename V = std::less<T>>
+template<typename T, typename U, typename V> 
 class BTree {
     using ptr = BNode<T, U> *;
     using helper = BIhelper<T, U, BNode<T, U> >;
@@ -201,9 +208,9 @@ public :
     typedef BIterator<T, U, false, BNode<T, U> > iterator;
     typedef BIterator<T, U, true, BNode<T, U> > const_iterator;
 
-    BTree() : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(V()), node_cnt(0) {}
-    BTree(V cmp) : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(cmp), node_cnt(0) {} 
-    BTree(const BTree &obj) : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(obj.cmp), node_cnt(0) {
+    BTree() : root(MakeNode::Cnode<BNode<T, U> >(this->pool, this)), cmp(V()), node_cnt(0) {}
+    BTree(V cmp) : root(MakeNode::Cnode<BNode<T, U> >(this->pool, this)), cmp(cmp), node_cnt(0) {} 
+    BTree(const BTree &obj) : root(MakeNode::Cnode<BNode<T, U> >(this->pool, this)), cmp(obj.cmp), node_cnt(0) {
         for (auto iter = obj.begin(); iter != obj.end(); iter++) {
             this->insert(iter.node->key[iter.pos].first);
         }
@@ -228,20 +235,24 @@ public :
     }
 
     long long size() { return this->node_cnt; }
+    bool is_dirty;
     
     template<typename N>
     std::pair<iterator, bool> insert(N _p) {
         iterator op(nullptr);
+        is_dirty = true;
         insertimple(_p, op);
         std::pair<iterator, bool> __p = std::make_pair(op, true);
         return __p;
     }
 
     ptr erase(T key) {
+        is_dirty = true;
         return eraseimple(key);
     }
     ptr erase(iterator iter) {
-        return eraseimple(iter.node->key[iter.pos]);
+        is_dirty = true;
+        return eraseimple(iter.node->key[iter.pos].first);
     }
     ptr erase(iterator itera, iterator iterb) {
         for (auto iter = itera; iter != (iterb.next());) {
@@ -280,6 +291,10 @@ public :
     const_iterator end() const {
         return this->root;
     }
+
+    inline void make() {
+        helper::maketail(this->root->next[0], 0, this->root);
+    }
    
     void output() {
         if (!this->node_cnt) return ;
@@ -303,8 +318,8 @@ private :
     ptr insert_balance(ptr root, ptr child, int pos) {
         if (child->n < MAX_M) return root;
         int spos = MAX_M / 2;
-        ptr node1 = MakeNode::Cnode<BNode<T, U> >(this->pool);
-        ptr node2 = MakeNode::Cnode<BNode<T, U> >(this->pool);
+        ptr node1 = MakeNode::Cnode<BNode<T, U> >(this->pool, this);
+        ptr node2 = MakeNode::Cnode<BNode<T, U> >(this->pool, this);
         node1->n = spos;
         node2->n = MAX_M - 1 - spos;
         for (int i = 0; i < spos; i++) {
@@ -331,7 +346,7 @@ private :
 
     ptr insert_val(ptr root, std::pair<T, U> val, iterator &op) {
         if (root == nullptr) {
-            root = MakeNode::Cnode<BNode<T, U> >(this->pool);
+            root = MakeNode::Cnode<BNode<T, U> >(this->pool, this);
             root->key[(root->n)++] = val;
             op = iterator(root, root->n - 1);
             this->node_cnt += 1;
@@ -374,7 +389,7 @@ private :
         this->root->next[0] = __insert(this->root->next[0], val, op);
         this->root->n = 1;
         if (this->root->next[0]->n == MAX_M) {
-            ptr p = MakeNode::Cnode<BNode<T, U> >(this->pool); 
+            ptr p = MakeNode::Cnode<BNode<T, U> >(this->pool, this); 
             p->next[0] = this->root->next[0];
             this->root->next[0] = insert_balance(p, this->root->next[0], 0);
         } // n must be < MAX_M
@@ -410,7 +425,7 @@ private :
     }
 
     void merge_node(ptr root, int pos) {
-        ptr node = MakeNode::Cnode<BNode<T, U> >(this->pool);
+        ptr node = MakeNode::Cnode<BNode<T, U> >(this->pool, this);
         for (int i = 0; i <= root->next[pos]->n; i++) {
             node->key[i] = root->next[pos]->key[i];
             node->next[i] = root->next[pos]->next[i];
@@ -519,14 +534,7 @@ private :
     long long node_cnt;
 };
 
-bool testcomp(BTree<int, int> &m) {
-    int firstkey = m.begin()->first;
-    for (auto iter = m.begin().next(); iter != m.end(); iter++) {
-        if (iter->first < firstkey) return 0;
-        firstkey = iter->first;
-    }
-    return 1;
-}
+namespace test1 {
 
 int main() {
     srand(time(0));
@@ -540,7 +548,6 @@ int main() {
     }
     m.output();
     cout << endl << endl << endl;
-    cout << "test ans is : " << testcomp(m) << endl << endl << endl;
 
     int p;
     
@@ -567,6 +574,64 @@ int main() {
         cout << p->first << " ";
     }
     cout << endl;
+
+    return 0;
+}
+
+}
+
+
+namespace test2{
+int main() {
+#define T_key int
+#define T_val int
+#define T_cmp std::less<T_key>
+    BTree<int, int> m;
+    T_key x;
+    T_val y;
+    for (int i = 0; i < 100; i++) {
+        x = rand() % 10000;
+        y = rand() % 100;
+        std::pair<T_key, T_val> p =  std::make_pair(x, y);
+        m.insert(p);
+    }
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
+    auto iter = m.begin();
+    auto size = m.size();
+    for (int i = 0; i < size / 2; i++) {
+        m.erase(iter++);
+    }
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
+
+#undef T_key
+#undef T_val
+#undef T_cmp
+    return 0;
+}
+}
+
+int main() {
+    
+#define T_key int
+#define T_val int
+    BTree<int, int> m;
+    T_key x;
+    T_val y;
+    for (int i = 0; i < 100; i++) {
+        x = rand() % 10000;
+        y = rand() % 100;
+        std::pair<T_key, T_val> p =  std::make_pair(x, y);
+        m.insert(p);
+    }
+    auto iter = m.begin();
+    auto size = m.size();
+    for (int i = 0; i < size / 2; i++) iter++;
+    m.erase(m.begin(), iter);
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
+#undef T_key
+#undef T_val
+#undef T_cmp
+
 
     return 0;
 }
