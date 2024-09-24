@@ -17,6 +17,7 @@
 #include <vector>
 #include "2.h"
 #include "My_functional.h"
+#include <unistd.h>
 using namespace std;
 
 const int MAX_M = 5;
@@ -50,24 +51,61 @@ public :
         return ;
     }
 
-    static iterator get_next(iterator p) {
+    static iterator get_next(iterator &p) {
         if (p.node->next[p.pos + 1] != nullptr) {
+            printf("-----key : %d has right child-----\n", p.node->key[p.pos].first);
             Node *temp = p.node->next[p.pos + 1];
             while (temp->next[0] != nullptr) temp = temp->next[0];
             return temp;
         }
         else if (p.pos < p.node->n - 1) {
+            printf("-----key : %d has right element-----\n", p.node->key[p.pos].first);
             return iterator(p.node, p.pos + 1);
         } else {
-            if (p.node->father->next[p.node->fapos + 1] != nullptr) {
+            if (p.node->fapos < p.node->father->n) {
+            // if (p.node->father->next[p.node->fapos + 1] != nullptr) {
+            printf("-----key : %d in father's left-----\n", p.node->key[p.pos].first);
                 return iterator(p.node->father, p.node->fapos);
             } else {
-                Node *temp = p.node;
-                while (temp->father != nullptr && temp->father->next[temp->fapos + 1] == nullptr) temp = temp->father;
+                printf("-----key : %d in father's right-----\n", p.node->key[p.pos].first);
+                ptr temp = p.node;
+                // while (temp->father != nullptr && temp->father->next[temp->fapos + 1] == nullptr) temp = temp->father;
+                while (temp->father != nullptr && temp->fapos == temp->father->n) temp = temp->father;
+                printf("=====key : %d =====\n", temp->key[0].first);
+                printf("====='s father key : %d=====\n", temp->father->key[temp->fapos].first);
                 return iterator(temp->father, temp->fapos);
             }
         }
     }
+
+    static iterator get_pre(iterator &p) {
+        if (p.node->next[p.pos] != nullptr) {
+            printf("-----key : %d has left child-----\n", p.node->key[p.pos].first);
+            Node *temp = p.node->next[p.pos];
+            while (temp->next[temp->n] != nullptr) temp = temp->next[temp->n];
+            return temp;
+        }
+        else if (p.pos > 0) {
+            printf("-----key : %d has left element-----\n", p.node->key[p.pos].first);
+            return iterator(p.node, p.pos + 1);
+        } else {
+            if (p.node->fapos > 0) {
+            // if (p.node->father->next[p.node->fapos + 1] != nullptr) {
+            printf("-----key : %d in father's right-----\n", p.node->key[p.pos].first);
+                return iterator(p.node->father, p.node->fapos);
+            } else {
+                printf("-----key : %d in father's right-----\n", p.node->key[p.pos].first);
+                ptr temp = p.node;
+                // while (temp->father != nullptr && temp->father->next[temp->fapos + 1] == nullptr) temp = temp->father;
+                while (temp->father != nullptr && temp->fapos == 0) temp = temp->father;
+                printf("=====key : %d =====\n", temp->key[0].first);
+                printf("====='s father key : %d=====\n", temp->father->key[temp->fapos].first);
+                return iterator(temp->father, temp->fapos);
+            }
+        }
+    }
+
+
 };
 
 
@@ -80,6 +118,10 @@ class BIterator {
 
 public :
     BIterator(Node *node, int pos = 0) : node(node), pos(pos) {}
+
+    Node &operator*() const {
+        return *static_cast<Node *>(this->node);
+    }
     
     ptr operator->() {
         return &((*(*this)).key[this->pos]);
@@ -88,11 +130,61 @@ public :
         return &((*(*this)).key[this->pos]);
     }
 
+    self operator++() {
+        self temp = helper::get_next(*this);
+        this->node = temp.node;
+        this->pos = temp.pos;
+        return *this;
+    }
+    self operator++(int) {
+        self temp = helper::get_next(*this);
+        self x(*this);
+        this->node = temp.node;
+        this->pos = temp.pos;
+        return x;
+    }
 
+    self operator--() {
+        self temp = helper::get_pre(*this);
+        this->node = temp.node;
+        this->pos = temp.pos;
+        return *this;
+    }
+    self operator--(int) {
+        self temp = helper::get_next(*this);
+        self iter(*this);
+        this->node = temp->node;
+        this->pos = temp->pos;
+        return iter;
+    }
+    
+    self next() {
+        return self(helper::get_next(*this));
+    } 
+    self next() const {
+        return self(helper::get_next(*this));
+    }
 
+    self pre() {
+        return self(helper::get_pre(*this));
+    }
+    self pre() const {
+        return self(helper::get_pre(*this));
+    }
 
+    self &operator=(const U &val) {
+        if (this->node == nullptr) return *this;
+        this->node->key[pos].second = val;
+        return *this;
+    }
 
-private :
+    bool operator!=(const self &obj) {
+        return this->node != obj.node;
+    }
+    bool operator==(const self &obj) {
+        return this->node == obj.node;
+    }
+
     Node *node;
     int pos;
 };
@@ -103,12 +195,30 @@ class BTree {
     using ptr = BNode<T, U> *;
     using helper = BIhelper<T, U, BNode<T, U> >;
 public :
-    BTree() : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(V()) {}
-    BTree(V cmp) : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(cmp) {} 
+    typedef BIterator<T, U, false, BNode<T, U> > iterator;
+    typedef BIterator<T, U, true, BNode<T, U> > const_iterator;
+    BTree() : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(V()), node_cnt(0) {}
+    BTree(V cmp) : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(cmp), node_cnt(0) {} 
     // TODO copy constructor
     ~BTree() {
         M_pool::DePool(this->pool);
         return ;
+    }
+
+    iterator find(const T &val) {
+        iterator p = findimple(this->root->next[0], val);
+        if (p.node == nullptr) return this->end();
+        return p;
+    }
+
+    iterator findimple(ptr root, T val) {
+        if (root == nullptr) return iterator(nullptr);
+        int pos = 0;
+        while (pos < root->n && root->key[pos].first < val) pos += 1;
+        if (root->key[pos].first == val) {
+            return iterator(root, pos);
+        }
+        return findimple(root->next[pos], val);
     }
 
     ptr insert_balance(ptr root, ptr child, int pos) {
@@ -144,6 +254,7 @@ public :
         if (root == nullptr) {
             root = MakeNode::Cnode<BNode<T, U> >(this->pool);
             root->key[(root->n)++] = val;
+            this->node_cnt += 1;
             return root;
         }
         int pos = 0;
@@ -157,6 +268,7 @@ public :
         }
         root->key[pos] = val;
         root->n += 1;
+        this->node_cnt += 1;
         return root;
     }
 
@@ -168,6 +280,7 @@ public :
         while (pos < root->n && root->key[pos].first < val.first) pos += 1;
         if (pos < root->n && root->key[pos].first == val.first) { // TODO
             root->key[pos] = val;
+            // this->node_cnt += 1;
             return root;
         }
         __insert(root->next[pos], val);
@@ -176,6 +289,7 @@ public :
 
     ptr insert(std::pair<T, U> val) {
         this->root->next[0] = __insert(this->root->next[0], val);
+        this->root->n = 1;
         if (this->root->next[0]->n == MAX_M) {
             ptr p = MakeNode::Cnode<BNode<T, U> >(this->pool); 
             p->next[0] = this->root->next[0];
@@ -256,6 +370,7 @@ public :
             root->key[i - 1] = root->key[i];
         }
         root->n -= 1;
+        this->node_cnt -= 1;
         return ;
     }
 
@@ -278,6 +393,7 @@ public :
     }
 
     ptr erase(T val) {
+        if (!this->node_cnt) return this->root;
         this->root->next[0] = __erase(this->root->next[0], val);
         if (this->root->next[0]->n == 0) {
             ptr p = this->root->next[0]->next[0];
@@ -286,6 +402,16 @@ public :
             this->root->next[0] = p;
         }
         return this->root->next[0];
+    }
+
+    iterator begin() {
+        if (this->root->next[0] == nullptr) return this->root;
+        ptr p = this->root->next[0];
+        while (p->next[0] != nullptr) p = p->next[0];
+        return p;
+    }
+    iterator end() {
+        return this->root;
     }
     
     void print_node(ptr root) {
@@ -315,7 +441,9 @@ public :
     }
     
     void output() {
+        if (!this->node_cnt) return ;
         helper::maketail(this->root->next[0], 0, this->root);
+        cout << "=-=-=- virtual root 's n : " << this->root->n <<  "-=-=-=" << endl;
         __output(this->root->next[0]);
         return ;
     }
@@ -324,6 +452,7 @@ private :
     M_pool *pool = M_pool::Creat_Pool(2048);
     mfunction<bool(T, U)> cmp;
     ptr root; // virtual root
+    long long node_cnt;
 };
 
 
@@ -341,10 +470,27 @@ int main() {
     int p;
     while (~scanf("%d", &p)) {
         if (p == -1) break;
+        printf("find %d from the tree\n\n", p);
+        if (m.find(p) != m.end()) cout << "\033[32;1m" << "successfully find" << "\033[0m"<< endl;
+        else cout << "\033[31;1m" << "there is no " << p << "in this tree" << "\033[0m"<< endl;
+    }
+    while (~scanf("%d", &p)) {
+        if (p == -1) break;
         printf("erase %d from the tree\n\n", p);
         m.erase(p);
         m.output();
+        for (BIterator<int, int, false, BNode<int, int> > p = m.begin(); p != m.end(); p++) {
+            cout << "\033[31;1m" << p->first  << "\033[0m"<< endl;
+        }
+        if (m.begin() == m.end()) {
+            cout << "\033[31;1m" << "the tree is null" << "\033[0m"<< endl;
+            exit(0);
+        }
     }
+    for (BIterator<int, int, false, BNode<int, int> > p = m.begin(); p != m.end(); p++) {
+        cout << p->first << " ";
+    }
+    cout << endl;
 
     return 0;
 }

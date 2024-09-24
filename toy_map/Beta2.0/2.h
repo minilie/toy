@@ -93,7 +93,7 @@ public :
         return &((*(*this)).key);
     }
 
-    ref operator++() {
+    self operator++() {
         this->node = helper::get_next(this->node);
         return *this;
     }
@@ -103,7 +103,7 @@ public :
         return iter;
     }
 
-    ref operator--() {
+    self operator--() {
         this->node = helper::get_predecessor(this->node);
         return *this;
     }
