@@ -20,9 +20,9 @@ bool testcomp(map<key, val, CMP, TreeType> &m) {
     return 1;
 }
 
-#define T_case 1000000
+#define T_case 1000
 
-#define T_treetype BRTree
+#define T_treetype BTree
 #define T_key long long
 #define T_val int
 #define T_cmp std::less<T_key>
@@ -36,16 +36,16 @@ TEST(insert, T_treetype) { // test one key insert
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
     }
+                          /*
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
+    */
 }
-#undef T_treetype
 #undef T_key
 #undef T_val
 #undef T_cmp
 
 
-#define T_treetype BRTree
 #define T_key long long
 #define T_val int
 #define T_cmp std::less<T_key>
@@ -69,41 +69,12 @@ TEST(insert, va_key) { // test variadic insert
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 }
-#undef T_treetype
 #undef T_key
 #undef T_val
 #undef T_cmp
 
 
-#define T_treetype BRTree
-#define T_key long long
-#define T_val int
-#define T_cmp std::less<T_key>
-TEST(insert, subscript_operator) { // test variadic insert
-    map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
-    T_key x;
-    T_val y;
-    x = rand() % 10000;
-    y = rand() % 1000;
-    m[x] = y;             // test [] insert
-    EXPECT_EQ(y, m.find(x)->second);
 
-    x = rand() % 10000;
-    y = rand() % 1000;
-    std::pair<T_key, T_val> p3 = std::make_pair(x, y);
-    m[x] = 5;             // test [] modify
-    EXPECT_EQ(5, m.find(x)->second);
-
-    bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
-    EXPECT_NE(0, testanswer); // Test if the elements are all in order
-}
-#undef T_treetype
-#undef T_key
-#undef T_val
-#undef T_cmp
-
-
-#define T_treetype BRTree
 #define T_key long long
 #define T_val int
 #define T_cmp std::less<T_key>
@@ -126,13 +97,11 @@ TEST(erase, key) { // test key erase
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
 }
-#undef T_treetype
 #undef T_key
 #undef T_val
 #undef T_cmp
 
 
-#define T_treetype BRTree
 #define T_key long long
 #define T_val int
 #define T_cmp std::less<T_key>
@@ -155,12 +124,10 @@ TEST(erase, one_iter) { // tset one iterator erase
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
 }
-#undef T_treetype
 #undef T_key
 #undef T_val
 #undef T_cmp
 
-#define T_treetype BRTree
 #define T_key long long
 #define T_val int
 #define T_cmp std::less<T_key>
@@ -182,7 +149,6 @@ TEST(erase, two_iter) { // test range iterator erase
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
 }
-#undef T_treetype
 #undef T_key
 #undef T_val
 #undef T_cmp

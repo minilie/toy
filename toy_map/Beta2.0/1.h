@@ -18,7 +18,6 @@ class BRTree {
 public :
     typedef Iterator<T, U, false, TreeNode<T, U> > iterator;
     typedef Iterator<T, U, true, TreeNode<T, U> > const_iterator;
-    // MakeNode<TreeNode<T, U>, T, U>::Cnode(this->pool, )
 
     BRTree() : root(MakeNode::Cnode<TreeNode<T, U>, T, U>(this->pool, T(), U(), BLACK)), cmp(V()), node_cnt(0) {}
     BRTree (V cmp) : root(MakeNode::Cnode<TreeNode<T, U>, T, U>(this->pool, T(), U(), BLACK)), cmp(cmp), node_cnt(0) {}
