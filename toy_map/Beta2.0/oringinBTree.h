@@ -2,16 +2,14 @@
 	> File Name: BTree.h
 	> Author:Xin 
 	> Mail:2923262959@qq.com 
-	> Created Time: Fri 27 Sep 2024 10:44:20 PM CST
+	> Created Time: Tue 24 Sep 2024 11:25:23 AM CST
  ************************************************************************/
 
 #ifndef _BTREE_H
 #define _BTREE_H
 
-
 #include "2.h"
 #include "My_functional.h"
-#include <vector>
 
 const int MAX_M = 15;
 
@@ -32,35 +30,16 @@ class BIhelper {
     using iterator = BIterator<T, U, 0, Node>;
     using const_iterator = BIterator<T, U, 1, Node>;
 public :
-
-    static iterator get_next(iterator &p) {
-        std::cout << "get next : p.key : " << p.node->key[p.pos].first << "  ---- p.pos : " << p.pos << std::endl;
-        std::cout << "p.node->father == nullptr : " << (p.node->father == nullptr) << std::endl;
-        if (p.node->father == nullptr) exit(0);
-        if (p.node->next[p.pos + 1] == nullptr) {
-            std::cout << "p.node->next[p.pos + 1] == nullptr" << std::endl;
-
-            if (p.pos < p.node->n - 1) { 
-                std::cout << "p.pos < p.node->n - 1" << std::endl;
-                return iterator(p.node, p.pos + 1);
-            }
-            if (p.node->fapos < p.node->father->n) {
-                std::cout << "p.node->fapos < p.node->father->n" << std::endl;
-                return iterator(p.node->father, p.node->fapos);
-            } else {
-                std::cout << "p.node->fapos < p.node->father->n else" << std::endl;
-                ptr temp = p.node;
-                while (temp->father != nullptr && temp->fapos == temp->father->n) temp = temp->father;
-                return iterator(temp->father, temp->fapos);
-            }
-        } else {
-            std::cout << "p.node->next[p.pos + 1] != nullptr" << std::endl;
-            ptr temp = p.node->next[p.pos + 1];
-            while (temp->next[0] != nullptr) temp = temp->next[0];
-            return iterator(temp, 0);
+    static void maketail(ptr p, int posfa, ptr fa) {
+        if (p == nullptr) return ;
+        p->fapos = posfa;
+        p->father = fa;
+        for (int i = 0; i <= p->n; i++) {
+            maketail(p->next[i], i, p);
         }
+        return ;
     }
-/*
+
     static iterator get_next(iterator &p) {
         if (p.node->father == nullptr) return p;
         if (p.node->next[p.pos + 1] != nullptr) {
@@ -68,23 +47,23 @@ public :
             while (temp->next[0] != nullptr) temp = temp->next[0];
             return temp;
         }
-        if (p.pos < p.node->n - 1) {
+        else if (p.pos < p.node->n - 1) {
             return iterator(p.node, p.pos + 1);
         } else {
-            if (p.node->fapos < p.node->father->n - 1) {
-            // if (p.node->father != nullptr && p.node->father->next[p.node->fapos + 1] != nullptr) {
+            // std::cout << "======= p->key : " << p.node->key[p.pos].first << "===========" << std::endl;
+            // std::cout << "======= p->father->key : " << p.node->father->key[p.node->fapos].first << "===========" << std::endl;
+            if (p.node->fapos < p.node->father->n) {
+            // if (p.node->father->next[p.node->fapos + 1] != nullptr) {
                 return iterator(p.node->father, p.node->fapos);
-            }
-            else {
+            } else {
                 ptr temp = p.node;
                 // while (temp->father != nullptr && temp->father->next[temp->fapos + 1] == nullptr) temp = temp->father;
                 while (temp->father != nullptr && temp->fapos == temp->father->n) temp = temp->father;
-                if (temp->father == nullptr) return temp;
                 return iterator(temp->father, temp->fapos);
             }
         }
     }
-*/
+
     static iterator get_pre(iterator &p) {
         if (p.node->next[p.pos] != nullptr) {
             Node *temp = p.node->next[p.pos];
@@ -116,7 +95,6 @@ class BIterator {
 
 public :
     BIterator(Node *node = nullptr, int pos = 0) : node(node), pos(pos) {}
-    BIterator(const BIterator &obj) : node(obj.node), pos(obj.pos) {}
 
     Node &operator*() const {
         return *static_cast<Node *>(this->node);
@@ -131,13 +109,15 @@ public :
 
     self operator++() {
         self temp = helper::get_next(*this);
-        *this = temp;
+        this->node = temp.node;
+        this->pos = temp.pos;
         return *this;
     }
     self operator++(int) {
         self temp = helper::get_next(*this);
         self x(*this);
-        *this = temp;
+        this->node = temp.node;
+        this->pos = temp.pos;
         return x;
     }
 
@@ -195,19 +175,12 @@ public :
     typedef BIterator<T, U, false, BNode<T, U> > iterator;
     typedef BIterator<T, U, true, BNode<T, U> > const_iterator;
 
-    BTree() : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(V()), node_cnt(0) {
-        this->root->father = nullptr;
-        return ;
-    }
-    BTree(V cmp) : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(cmp), node_cnt(0) {
-        this->root->father = nullptr;
-        return ;
-    }
+    BTree() : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(V()), node_cnt(0) {}
+    BTree(V cmp) : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(cmp), node_cnt(0) {}
     BTree(const BTree &obj) : root(MakeNode::Cnode<BNode<T, U> >(this->pool)), cmp(obj.cmp), node_cnt(0) {
         for (auto iter = obj.begin(); iter != obj.end(); iter++) {
             this->insert(iter.node->key[iter.pos].first);
         }
-        this->root->father = nullptr;
         return ;
     }
     ~BTree() {
@@ -233,27 +206,29 @@ public :
     template<typename N>
     std::pair<iterator, bool> insert(N _p) {
         iterator op(nullptr);
+        this->is_dirty = true;
         insertimple(_p, op);
         std::pair<iterator, bool> __p = std::make_pair(op, true);
-        this->root->father = nullptr;
         return __p;
     }
 
     ptr erase(T key) {
-        return this->eraseimple(key);
+        this->is_dirty = true;
+        this->make();
+        return eraseimple(key);
     }
-    ptr erase(iterator &iter) {
-        T key = iter.node->key[iter.pos].first;
-        return this->erase(key);
+    ptr erase(iterator iter) {
+        this->is_dirty = true;
+        return erase(iter.node->key[iter.pos].first);
     }
-    ptr erase(iterator &itera, iterator &iterb) {
-        iterb++;
-        std::vector<T> keylist;
-        for (auto iter = itera; iter != (iterb);) {
-            keylist.push_back(iter.node->key[iter.pos].first);
-            iter++;
+    ptr erase(iterator itera, iterator iterb) {
+        int cnt = 0;
+        this->make();
+        for (auto iter = itera; iter != (iterb.next());) {
+            this->erase(iter++);
+            cnt += 1;
         }
-        for (int i = 0, I = keylist.size(); i < I; i++) this->erase(keylist[i]);
+        std::cout << "==-==-=-=- the cnt is : " << cnt << "==-=--=-" << std::endl;
         return this->root->next[0];
     }
 
@@ -269,32 +244,54 @@ public :
     }
 
     iterator begin() {
-        if (!this->node_cnt) return this->root;
+        if (this->root->next[0] == nullptr) return this->root;
+        if (is_dirty) {
+            is_dirty = false;
+            this->make();
+        }
         ptr p = this->root->next[0];
         while (p->next[0] != nullptr) p = p->next[0];
         return p;
     }
     const_iterator begin() const {
-        if (!this->node_cnt) return this->root;
+        if (this->root->next[0] == nullptr) return this->root;
+        if (is_dirty) {
+            is_dirty = false;
+            this->make();
+        }
         ptr p = this->root->next[0];
         while (p->next[0] != nullptr) p = p->next[0];
         return p;
     }
 
     iterator end() {
+        if (is_dirty) {
+            is_dirty = false;
+            this->make();
+        }
         return this->root;
     }
     const_iterator end() const {
+        if (is_dirty) {
+            is_dirty = false;
+            this->make();
+        }
         return this->root;
+    }
+
+    inline void make() {
+        helper::maketail(this->root->next[0], 0, this->root);
+        return ;
     }
 
     void output() {
         if (!this->node_cnt) return ;
-        __output(this->root->next[0]);
+        helper::maketail(this->root->next[0], 0, this->root);
+        // __output(this->root->next[0]);
         return ;
     }
 
-// private :
+private :
     iterator findimple(ptr root, T val) {
         if (root == nullptr) return iterator(nullptr);
         int pos = 0;
@@ -306,11 +303,7 @@ public :
     }
 
     ptr insert_balance(ptr root, ptr child, int pos) {
-        if (child->n < MAX_M) {
-            // child->fapos = pos;
-            // child->father = root;
-            return root;
-        }
+        if (child->n < MAX_M) return root;
         int spos = MAX_M / 2;
         ptr node1 = MakeNode::Cnode<BNode<T, U> >(this->pool);
         ptr node2 = MakeNode::Cnode<BNode<T, U> >(this->pool);
@@ -319,43 +312,22 @@ public :
         for (int i = 0; i < spos; i++) {
             node1->key[i] = child->key[i];
             node1->next[i] = child->next[i];
-            if (node1->next[i] != nullptr) {
-                node1->next[i]->fapos = i;
-                node1->next[i]->father = node1;
-            }
         }
         node1->next[spos] = child->next[spos];
-        if (node1->next[spos] != nullptr) node1->next[spos]->father = node1;
         for (int i = 0; i < node2->n; i++) {
             node2->key[i] = child->key[i + spos + 1];
             node2->next[i] = child->next[i + spos + 1];
-            if (node2->next[i] != nullptr) {
-                node2->next[i]->fapos = i;
-                node2->next[i]->father = node2;
-            }
         }
         node2->next[node2->n] = child->next[child->n];
-        if (node2->next[node2->n] != nullptr) {
-            node2->next[node2->n]->fapos = node2->n;
-            node2->next[node2->n]->father = node2;
-        }
         for (int i = root->n; i >= pos; i--) {
             root->key[i + 1]  = root->key[i];
-            root->next[i + 1] = root->next[i]; // TODO
-            if (root->next[i + 1] != nullptr) {
-                root->next[i + 1]->fapos = i + 1;
-                root->next[i + 1]->father = root; // can be erase ?
-            }
+            root->next[i + 1] = root->next[i];
         } // TODO
         root->key[pos] = child->key[spos];
         root->next[pos] = node1;
         root->next[pos + 1] = node2;
         root->n += 1;
-        // make tail
-        node1->fapos = pos;
-        node2->fapos = pos + 1;
-        node1->father = node2->father = root;
-        child = nullptr;
+        // free(child);
         return root;
     }
 
@@ -393,12 +365,10 @@ public :
         if (pos < root->n && root->key[pos].first == val.first) { // TODO
             root->key[pos] = val;
             op = iterator(root, pos);
+            // this->node_cnt += 1;
             return root;
         }
-        ptr temp = __insert(root->next[pos], val, op);
-        // make tail
-        temp->fapos = pos;
-        temp->father = root;
+        __insert(root->next[pos], val, op);
         return insert_balance(root, root->next[pos], pos);
     }
 
@@ -410,11 +380,6 @@ public :
             p->next[0] = this->root->next[0];
             this->root->next[0] = insert_balance(p, this->root->next[0], 0);
         } // n must be < MAX_M
-
-        // make tail
-        this->root->next[0]->fapos = 0;
-        this->root->next[0]->father = this->root;
-
         return op;
     }
 
@@ -422,19 +387,10 @@ public :
         for (int i = root->next[pos + 1]->n + 1; i >= 0; i--) {
             root->next[pos + 1]->key[i] = root->next[pos + 1]->key[i - 1];
             root->next[pos + 1]->next[i] = root->next[pos + 1]->next[i - 1];
-            if (root->next[pos + 1]->next[i] != nullptr) {
-                root->next[pos + 1]->next[i]->fapos = i;
-                root->next[pos + 1]->next[i]->father = root->next[pos + 1];
-            }
         }
         root->next[pos + 1]->key[0] = root->key[pos];
         root->key[pos] = root->next[pos]->key[root->next[pos]->n - 1];
         root->next[pos + 1]->next[0] = root->next[pos]->next[root->next[pos]->n];
-        //
-        if (root->next[pos + 1]->next[0] != nullptr) {
-            root->next[pos + 1]->next[0]->fapos = 0;
-            root->next[pos + 1]->next[0]->father = root->next[pos + 1];
-        }
         root->next[pos]->next[root->next[pos]->n] = nullptr;
         root->next[pos + 1]->n += 1;
         root->next[pos]->n -= 1;
@@ -446,19 +402,9 @@ public :
         root->next[pos]->n += 1;
         root->key[pos] = root->next[pos + 1]->key[0];
         root->next[pos]->next[root->next[pos]->n] = root->next[pos + 1]->next[0];
-        //
-        if (root->next[pos]->next[root->next[pos]->n] != nullptr) {
-            root->next[pos]->next[root->next[pos]->n]->fapos = root->next[pos]->n;
-            root->next[pos]->next[root->next[pos]->n]->father= root->next[pos];
-        }
-
         for (int i = 0; i < root->next[pos + 1]->n; i++) {
             root->next[pos + 1]->key[i] = root->next[pos + 1]->key[i + 1];
             root->next[pos + 1]->next[i] = root->next[pos + 1]->next[i + 1];
-            if (root->next[pos + 1]->next[i] != nullptr) {
-                root->next[pos + 1]->next[i]->fapos = i;
-                root->next[pos + 1]->next[i]->father = root->next[pos + 1];
-            }
         }
         root->next[pos + 1]->next[root->next[pos + 1]->n] = nullptr;
         root->next[pos + 1]->n -= 1;
@@ -470,39 +416,21 @@ public :
         for (int i = 0; i <= root->next[pos]->n; i++) {
             node->key[i] = root->next[pos]->key[i];
             node->next[i] = root->next[pos]->next[i];
-            if (node->next[i] != nullptr) {
-                node->next[i]->fapos = i;
-                node->next[i]->father = node;
-            }
         }
         node->n = root->next[pos]->n + 1;
         node->key[node->n - 1] = root->key[pos];
         for (int i = 0; i <= root->next[pos + 1]->n; i++) {
             node->key[node->n + i]  = root->next[pos + 1]->key[i];
             node->next[node->n + i] = root->next[pos + 1]->next[i];
-            if (node->next[node->n + i] != nullptr) {
-                node->next[node->n + i]->fapos = node->n + i;
-                node->next[node->n + i]->father = node;
-            }
         }
         node->n += root->next[pos + 1]->n;
         // free(root->next[pos]);
         // free(root->next[pos + 1]);
-        root->next[pos] = nullptr;
-        root->next[pos + 1] = nullptr;
         for (int i = pos + 1; i <= root->n; i++) {
             root->key[i - 1] = root->key[i];
             root->next[i - 1] = root->next[i];
-            if (root->next[i - 1] != nullptr) {
-                root->next[i - 1]->fapos = i - 1;
-                root->next[i - 1]->father = root;
-            }
         }
         root->next[pos] = node;
-
-        // make tail
-        node->fapos = pos;
-        node->father = root;
         root->n -= 1;
         return ;
     }
@@ -540,40 +468,22 @@ public :
         } else {
             if (pos < root->n && root->key[pos].first == val) {
                 ptr temp = root->next[pos];
-                while (temp->next[temp->n] != nullptr) temp = temp->next[temp->n];
+                while (temp->next[temp->n]) temp = temp->next[temp->n];
                 swap(root->key[pos], temp->key[temp->n - 1]);
             }
             root->next[pos] = __erase(root->next[pos], val);
-            // make tail
-            if (root->next[pos] != nullptr) {
-                root->next[pos]->fapos = pos;
-                root->next[pos]->father = root;
-            }
         }
         return erase_balance(root, pos);
     }
 
     ptr eraseimple(T val) {
+        if (!this->node_cnt) return this->root;
         this->root->next[0] = __erase(this->root->next[0], val);
-        if (!this->node_cnt) {
-            this->root->n = 0;
-            return this->root;
-        }
         if (this->root->next[0]->n == 0) {
             ptr p = this->root->next[0]->next[0];
             // free(this->root->next[0]);
-            this->root->next[0] = nullptr;
             this->root->next[0] = p;
         }
-
-        // make tail
-        if (this->root->next[0] == nullptr) {
-            this->root->n = 0;
-            return this->root;
-        }
-        this->root->next[0]->fapos = 0;
-        this->root->next[0]->father = this->root;
-
         return this->root->next[0];
     }
 
@@ -607,7 +517,7 @@ public :
     mfunction<bool(T, U)> cmp;
     ptr root; // virtual root
     long long node_cnt;
+    bool is_dirty;
 };
-
 
 #endif
