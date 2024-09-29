@@ -19,7 +19,7 @@ bool testcomp(map<key, val, CMP, TreeType> &m) {
     return 1;
 }
 
-#define T_case 100000
+#define T_case 10000000
 #define T_treetype BRTree
 #define T_key long long
 #define T_val int
@@ -29,7 +29,7 @@ TEST(insert, T_treetype) { // test one key insert
     T_key x;
     T_val y;
     for (int i = 0; i < T_case; i++) {
-        x = rand() % 10000;
+        x = rand() % 10000000;
         y = rand() % 100;
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
@@ -111,15 +111,17 @@ TEST(erase, key) { // test key erase
     T_val y;
     std::vector<T_key> keylist;
     for (int i = 0; i < T_case; i++) {
-        x = rand() % 10000;
+        x = rand() % 10000000;
         y = rand() % 100;
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
         keylist.push_back(x);
     }
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     for (int i = 0, I = keylist.size(); i < I / 2; i++) {
-        m.erase(keylist[0]);
+        m.erase(keylist[i]);
     }
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
@@ -139,16 +141,18 @@ TEST(erase, one_iter) { // tset one iterator erase
     T_key x;
     T_val y;
     for (int i = 0; i < T_case; i++) {
-        x = rand() % 10000;
+        x = rand() % 10000000;
         y = rand() % 100;
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
     }
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     auto iter = m.begin();
     auto size = m.size();
     for (int i = 0; i < size / 2; i++) {
         m.erase(iter++);
     }
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
@@ -167,11 +171,12 @@ TEST(erase, two_iter) { // test range iterator erase
     T_key x;
     T_val y;
     for (int i = 0; i < T_case; i++) {
-        x = rand() % 10000;
+        x = rand() % 10000000;
         y = rand() % 100;
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
     }
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     auto iter = m.begin();
     auto size = m.size();
     for (int i = 0; i < size / 2; i++) iter++;
