@@ -9,6 +9,7 @@
 #define _MAP_H
 
 #include "1.h"
+#include "3.h"
 #include "BTree.h"
 
 template<typename T, typename U, typename COMP = std::less<T>, class TreeType = BRTree<T, U, COMP> >

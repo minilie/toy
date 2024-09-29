@@ -5,9 +5,6 @@
 	> Created Time: Fri 27 Sep 2024 10:44:20 PM CST
  ************************************************************************/
 
-#ifndef _BTREE_H
-#define _BTREE_H
-
 #include "2.h"
 #include "My_functional.h"
 #include <vector>
@@ -37,25 +34,33 @@ class BIhelper {
 public :
 
     static iterator __get_next(iterator &p) {
-        if (p.node == p.node->tree->root) {
+        std::cout << "get next : p.key : " << p.node->key[p.pos].first << "  ---- p.pos : " << p.pos << std::endl;
+        std::cout << "p.node->father == nullptr : " << (p.node->father == nullptr) << std::endl;
+        if (p.node->father == nullptr) {
+            std::cout << "achieve the root  " << std::endl;
+            exit(0);
             return p;
-        }
+        } 
         if (p.node->next[p.pos + 1] == nullptr) {
+            std::cout << "p.node->next[p.pos + 1] == nullptr" << std::endl;
 
-            if (p.pos < p.node->n - 1) {
+            if (p.pos < p.node->n - 1) { 
+                std::cout << "p.pos < p.node->n - 1" << std::endl;
                 return iterator(p.node, p.node->key[p.pos + 1].first);
             }
             if (p.node->fapos < p.node->father->n) {
+                std::cout << "p.node->fapos < p.node->father->n" << std::endl;
                 return iterator(p.node->father, p.node->father->key[p.node->fapos].first);
             } else {
+                std::cout << "p.node->fapos < p.node->father->n else" << std::endl;
                 ptr temp = p.node;
                 while (temp->father != nullptr && temp->fapos == temp->father->n) temp = temp->father;
                 return iterator(temp->father, temp->father->key[temp->fapos].first);
             }
-        } 
-        else {
+        } else {
+            std::cout << "p.node->next[p.pos + 1] != nullptr" << std::endl;
             ptr temp = p.node->next[p.pos + 1];
-            while (temp != nullptr && temp->next[0] != nullptr) temp = temp->next[0];
+            while (temp->next[0] != nullptr) temp = temp->next[0];
             return iterator(temp, temp->key[0].first);
         }
     }
@@ -232,14 +237,13 @@ public :
         this->root = obj.root;
         return *this; // TODO
     }
-    U &operator[](T key) {
+    BNode<T, U> &operator[](T key) {
         iterator p = this->find(key);
         if (p == this->end()) {
-            std::pair<T, U> k = std::make_pair(key, 233);
-            this->insert(k).first->second;
-            return this->find(key)->second;
+            std::pair<T, U> k = std::make_pair(key, U());
+            return *(this->insert(k).first);
         }
-        return p->second;
+        return *(p);
     }
 
     long long size() { return this->node_cnt; }
@@ -262,6 +266,7 @@ public :
     }
     ptr erase(iterator &itera, iterator &iterb) {
         T key = iterb.node->key[iterb.pos].first;
+        std::cout << "itera ===== " << itera.node->key[itera.pos].first << "    iterb ====== " << iterb.node->key[iterb.pos].first << std::endl;
         auto p = itera;
         T val;
         while (p.node->key[p.pos].first != key) {
@@ -271,6 +276,40 @@ public :
             this->erase(q);
             p = this->find(val);
         }
+        /*
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << " itera == iterb : " << (itera.node->key[itera.pos].first == key) << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << " itera == iterb : " << (itera.node->key[itera.pos].first == key) << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << " itera == iterb : " << (itera.node->key[itera.pos].first == key) << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << " itera == iterb : " << (itera.node->key[itera.pos].first == key) << std::endl;
+        itera++;
+        std::cout << "itera ++ ===== " << itera.node->key[itera.pos].first << " itera == iterb : " << (itera.node->key[itera.pos].first == key) << std::endl;
+        */
         return this->root->next[0];
     }
 
@@ -548,10 +587,7 @@ public :
     }
 
     ptr __erase(ptr root, T val) {
-        if (root == nullptr) {
-            std::cout << " there is no elements like this " << std::endl;
-            return root;
-        }
+        if (root == nullptr) return root;
         int pos = 0;
         while (pos < root->n && root->key[pos].first < val) pos += 1;
         if (root->next[0] == nullptr) {
@@ -598,19 +634,19 @@ public :
     }
 
     void print_node(ptr root) {
-        std::cout << root->n << " : " << std::endl;
+        printf("%d : \n", root->n);
         for (int i = 0; i < root->n; i++) {
             int faval = root->father->n == root->fapos ? root->father->key[root->fapos - 1].first : root->father->key[root->fapos].first;
-            std::cout << root->key[i].first << "(fa->val = " << faval << ", fapos = " << root->fapos << ") " << std::endl;
+            printf("%d(fa->val = %d, fapos = %d) \n", root->key[i].first, faval, root->fapos);
         }
         if (root->next[0] == nullptr) goto print_end;
-        std::cout << "| [ ";
+        printf("| [ ");
         for (int i = 0; i <= root->n; i++) {
-            std::cout << root->next[i]->key[0].first << " ";
+            printf("%d ", root->next[i]->key[0].first);
         }
-        std::cout << "]";
+        printf("]");
     print_end:
-        std::cout << std::endl;
+        printf("\n");
         return ;
     }
 
@@ -629,5 +665,76 @@ public :
     long long node_cnt;
 };
 
+namespace test4 {
+    int main() {
 
-#endif
+#define T_key int
+#define T_val int
+#define T_cmp std::less<T_key>
+    srand(time(0));
+    BTree<int, int> m;
+    T_key x;
+    T_val y;
+    for (int i = 0; i < 100; i++) {
+        x = rand() % 10000 + 1;
+        y = rand() % 100;
+        std::pair<T_key, T_val> p =  std::make_pair(x, y);
+        m.insert(p);
+    }
+    auto iter = m.begin();
+    auto size = m.size();
+        for (BIterator<int, int, false, BNode<int, int> > p = m.begin(); p != m.end();) {
+            auto q = p.next();
+            m.erase(p);
+            p = q;
+        }
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
+
+#undef T_key
+#undef T_val
+#undef T_cmp
+        return 0;
+    }
+}
+
+namespace test1 {
+int main() {
+    srand(time(0));
+    
+#define T_key int
+#define T_val int
+    BTree<int, int> m;
+    T_key x = 1;
+    T_val y;
+    for (int i = 0; i < 25; i++) {
+        y = rand() % 100;
+        std::pair<T_key, T_val> p =  std::make_pair(x++, y);
+        m.insert(p);
+    }
+    m.output();
+    auto iter = m.begin();
+    auto size = m.size();
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
+    for (int i = 0; i < size / 2; i++) iter++;
+    std::cout << "----=-=====waaaw-------iter : " << iter.node->key[0].first << "---------------" << std::endl;
+    auto opq = m.begin();
+    m.erase(opq, iter);
+    /*
+        for (BIterator<int, int, false, BNode<int, int> > p = m.begin(); p != m.end(); p++) {
+            std::cout << "\033[31;1m" << p->first  << "\033[0m"<< std::endl;
+        }
+        */
+    std::cout << std::endl << std::endl;
+    m.output();
+    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
+#undef T_key
+#undef T_val
+#undef T_cmp
+    return 0;
+}
+}
+
+int main() {
+    test1::main();
+    return 0;
+}

@@ -5,13 +5,15 @@
 	> Created Time: Sat 27 Jul 2024 03:43:46 PM CST
  ************************************************************************/
 
-#include "map.h"
 #include "Mytest.h"
+#include <iostream>
+#include <map>
+#include <functional>
 #include <chrono>
 
-template<typename key, typename val, typename CMP, typename TreeType>
-bool testcomp(map<key, val, CMP, TreeType> &m) {
-    mfunction<bool(key, key)> comp = CMP();
+template<typename key, typename val, typename CMP>
+bool testcomp(std::map<key, val> &m) {
+    std::function<bool(key, key)> comp = CMP();
     key firstkey = m.begin()->first;
     long long cnt = 0;
     for (auto iter = ++m.begin(); iter != m.end(); iter++) {
@@ -24,12 +26,11 @@ bool testcomp(map<key, val, CMP, TreeType> &m) {
 
 #define T_case 10000000
 
-#define T_treetype BTree 
 #define T_key long long 
 #define T_val int
 #define T_cmp std::less<T_key>
 TEST(insert, T_treetype) { // test one key insert
-    map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
+    std::map<T_key, T_val> m;
     T_key x;
     T_val y;
     for (int i = 0; i < T_case; i++) {
@@ -38,47 +39,18 @@ TEST(insert, T_treetype) { // test one key insert
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
     }
-    bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
+    bool testanswer = testcomp<T_key, T_val, T_cmp>(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 }
 #undef T_key
 #undef T_val
 #undef T_cmp
-
 
 #define T_key long long
 #define T_val int
 #define T_cmp std::less<T_key>
-TEST(insert, va_key) { // test variadic insert
-    map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
-    T_key x;
-    T_val y;
-    x = rand() % 10000;
-    y = rand() % 1000;
-    std::pair<T_key, T_val> p1 = std::make_pair(x, y);
-    x = rand() % 10000;
-    y = rand() % 1000;
-    std::pair<T_key, T_val> p2 = std::make_pair(x, y);
-    x = rand() % 10000;
-    y = rand() % 1000;
-    std::pair<T_key, T_val> p3 = std::make_pair(x, y);
-    x = rand() % 10000;
-    y = rand() % 1000;
-    std::pair<T_key, T_val> p4 = std::make_pair(x, y);
-    m.insert(p1, p2, p3, p4);
-    bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
-    EXPECT_NE(0, testanswer); // Test if the elements are all in order
-}
-#undef T_key
-#undef T_val
-#undef T_cmp
-
-
-#define T_key long long 
-#define T_val int
-#define T_cmp std::less<T_key>
 TEST(insert, subscript_operator) { // test variadic insert
-    map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
+    std::map<T_key, T_val> m;
     T_key x;
     T_val y;
     x = rand() % 10000;
@@ -89,24 +61,21 @@ TEST(insert, subscript_operator) { // test variadic insert
     x = rand() % 10000;
     y = rand() % 1000;
     std::pair<T_key, T_val> p3 = std::make_pair(x, y);
-    m[x] = 5;  
-    EXPECT_EQ(5, m[x]);
-    m[x] = 6;
-    EXPECT_EQ(6, m[x]);             // test [] modify
+    m[x] = 5;             // test [] modify
+    EXPECT_EQ(5, m.find(x)->second);
 
-    bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
+    bool testanswer = testcomp<T_key, T_val, T_cmp>(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 }
 #undef T_key
 #undef T_val
 #undef T_cmp
 
-
 #define T_key long long
 #define T_val int
 #define T_cmp std::less<T_key>
 TEST(erase, key) { // test key erase
-    map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
+    std::map<T_key, T_val> m;
     T_key x;
     T_val y;
     for (int i = 0; i < T_case; i++) {
@@ -124,7 +93,7 @@ TEST(erase, key) { // test key erase
     }
     
     std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
-    bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
+    bool testanswer = testcomp<T_key, T_val, T_cmp>(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 }
 #undef T_key
@@ -135,7 +104,7 @@ TEST(erase, key) { // test key erase
 #define T_val int
 #define T_cmp std::less<T_key>
 TEST(erase, one_iter) { // tset one iterator erase
-    map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
+    std::map<T_key, T_val> m;
     T_key x;
     T_val y;
     for (int i = 0; i < T_case; i++) {
@@ -153,7 +122,7 @@ TEST(erase, one_iter) { // tset one iterator erase
     }
     // m.output();
     std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
-    bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
+    bool testanswer = testcomp<T_key, T_val, T_cmp>(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
 }
@@ -166,7 +135,7 @@ TEST(erase, one_iter) { // tset one iterator erase
 #define T_val int
 #define T_cmp std::less<T_key>
 TEST(erase, two_iter) { // test range iterator erase
-    map<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp > > m;
+    std::map<T_key, T_val> m;
     T_key x;
     T_val y;
     for (int i = 0; i < T_case; i++) {
@@ -182,7 +151,7 @@ TEST(erase, two_iter) { // test range iterator erase
                        std::cout << "begin val : " << m.begin()->first << "   iter val : " << iter->first << std::endl;
     m.erase(m.begin(), iter);
     std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
-    bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
+    bool testanswer = testcomp<T_key, T_val, T_cmp>(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
 }

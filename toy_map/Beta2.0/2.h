@@ -22,17 +22,13 @@ struct TreeNode;
 class MakeNode;
 
 template<typename T, typename U>
-static TreeNode<T, U> *__NIL = new TreeNode<T, U>(T(), U(), BLACK);
+static TreeNode<T, U> *__NIL = new TreeNode<T, U>(T(), U(), BLACK, nullptr, nullptr);
 
 template<typename T, typename U>
 struct TreeNode {
     TreeNode(T key, U val, int color = RED, TreeNode<T, U> *lchild = NIL,
          TreeNode<T, U> *rchild = NIL) :
     key(key, val), color(color), lchild(lchild), rchild(rchild), father(NIL), height(1) {}
-    TreeNode<T, U> &operator=(U val) {
-        this->key.second = val;
-        return *this;
-    }
     std::pair<T, U> key;
     TreeNode<T, U> *father;
     TreeNode<T, U> *lchild, *rchild;

@@ -721,6 +721,6 @@ namespace test4 {
 }
 
 int main() {
-    test3::main();
+    test4::main();
     return 0;
 }

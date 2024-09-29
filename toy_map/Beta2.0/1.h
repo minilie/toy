@@ -36,13 +36,13 @@ public :
         this->root = obj.root;
         return *this;
     }
-    TreeNode<T, U> &operator[](T key) {
+    U &operator[](T key) {
         iterator p = this->find(key);
         if (p == this->end()) {
             std::pair<T, U> k = std::make_pair(key, U());
-            return *(this->insert(k).first);
+            return this->insert(k).first->second;
         }
-        return *(p);
+        return p->second;
     }
 
     long long size() { return this->node_cnt; }
