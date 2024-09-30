@@ -35,7 +35,7 @@ public :
         memset(temp, 0, all_size);
 
         M_pool *pool = (M_pool *)temp;
-        pool->small_capacity = capacity; // TODO
+        pool->small_capacity = capacity; 
         pool->b_start = nullptr;
         pool->s_usable = (small_block *)(pool->s_start);
 
