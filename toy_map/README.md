@@ -1,7 +1,3 @@
-## 标准
-
-#### c++17
-
 ## 功能
 
 ### TEST
@@ -38,7 +34,7 @@
 
 ##### map支持切换树的类型
 
-提供选择的类型有 ： BRTree (红黑树) 	AVLTree (AVL树)
+提供选择的类型有 ： BRTree (红黑树) 	AVLTree (AVL树)	BTree(B树)
 
 #### 自定义比较函数
 
@@ -97,3 +93,27 @@
 默认树的类型为红黑树 `BRTree` 默认比较函数为 `std::less<KeyType>`
 
 定义方式可以更简洁 ：`map<KeyType, ValType> m`
+
+## Makefile
+
+#### make 构建
+
+- Btest	指定平衡树类型为B树
+- AVLtest    指定平衡树类型为AVL树
+- BRtest      指定平衡树类型为红黑树
+- comp        STL map
+
+#### make run
+
+- 运行所有可执行文件
+- 统一输出最终完成各测试函数的执行时间
+  - make run target=Btest		单独执行Btest文件 输出各测试函数的具体信息
+  - make run target=AVLtest	    单独执行AVLtest文件 输出各测试函数的具体信息
+  - make run target=BRtest	      单独执行BRtest文件 输出各测试函数的具体信息
+  - make run target=comp	        单独执行comp文件 输出各测试函数的具体信息
+
+makefile内可修改测试样例数 T_CASE
+
+#### make clean
+
+- 删除由测试产生的可执行文件
