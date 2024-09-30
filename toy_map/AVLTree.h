@@ -14,21 +14,21 @@
 template<typename T, typename U, typename V = std::less<T>>
 class AVLTree {
     using helper = IteratorHelper<T, U, TreeNode<T, U>>;
-    using ptr = std::shared_ptr<TreeNode<T, U> >;
+    using ptr = TreeNode<T, U> *; 
 public :
     typedef Iterator<T, U, false, TreeNode<T, U> > iterator;
     typedef Iterator<T, U, true, TreeNode<T, U> > const_iterator;
 
-    AVLTree() : root(std::make_shared<TreeNode<T, U> >(T(), U())), cmp(V()), node_cnt(0) {}
-    AVLTree(V cmp) : root(std::make_shared<TreeNode<T, U> >(T(), U())), cmp(cmp), node_cnt(0) {}
-    AVLTree(const AVLTree &obj) : root(std::make_shared<TreeNode<T, U> >(T(), U(), BLACK)), cmp(obj.cmp), node_cnt(0) {
+    AVLTree() : root(MakeNode::Cnode<TreeNode<T, U>, T, U >(this->pool, T(), U())), cmp(V()), node_cnt(0) {}
+    AVLTree(V cmp) : root(MakeNode::Cnode<TreeNode<T, U>, T, U>(this->pool, T(), U())), cmp(cmp), node_cnt(0) {}
+    AVLTree(const AVLTree &obj) : root(MakeNode::Cnode<TreeNode<T, U>, T, U>(this->pool, T(), U(), BLACK)), cmp(obj.cmp), node_cnt(0) {
         for (auto iter = obj.begin(); iter != obj.end(); iter++) {
             this->insertinter(std::make_pair(iter->first, iter->second));
         }
         return ;
     }
     ~AVLTree() {
-        this->root.reset();
+        M_pool::DePool(this->pool);
         return ;
     }
 
@@ -36,13 +36,13 @@ public :
         this->root = obj.root;
         return *this;
     }
-    TreeNode<T, U> &operator[](T key) {
+    U &operator[](T key) {
         iterator p = this->find(key);
         if (p == this->end()) {
             std::pair<T, U> k = std::make_pair(key, U());
-            return *(this->insert(k).first);
+            return this->insert(k).first->second;
         }
-        return *(p);
+        return p->second;
     }
 
     long long size() { return this->node_cnt; }
@@ -120,7 +120,7 @@ private :
 
     void outputimple(ptr root) {
         if (root == NIL) return ;
-        std::cout << "(" << root->height << ") | (" << root->father.lock()->key.first << ") "
+        std::cout << "(" << root->height << ") | (" << root->father->key.first << ") "
         << root->key.first << "(" << root->key.second << ") " << "["
         << root->lchild->key.first << ", " << root->rchild->key.first << "]" << std::endl;
         outputimple(root->lchild);
@@ -130,8 +130,8 @@ private :
 
     ptr left_rotate(ptr root) {
         ptr new_root = root->rchild;
-        if (root->father.lock()->lchild == root) root->father.lock()->lchild = new_root;
-        else if (root->father.lock()->rchild == root) root->father.lock()->rchild = new_root;
+        if (root->father->lchild == root) root->father->lchild = new_root;
+        else if (root->father->rchild == root) root->father->rchild = new_root;
         new_root->father = root->father;
         root->rchild = new_root->lchild;
         new_root->lchild->father = root;
@@ -143,8 +143,8 @@ private :
     }
     ptr right_rotate(ptr root) {
         ptr new_root = root->lchild;
-        if (root->father.lock()->lchild == root) root->father.lock()->lchild = new_root;
-        else if (root->father.lock()->rchild == root) root->father.lock()->rchild = new_root;
+        if (root->father->lchild == root) root->father->lchild = new_root;
+        else if (root->father->rchild == root) root->father->rchild = new_root;
         new_root->father = root->father;
         root->lchild = new_root->rchild;
         new_root->rchild->father = root;
@@ -177,9 +177,8 @@ private :
     }
 
     ptr insertimple(ptr root, T key, U val, iterator &succeed, bool &flag) {
-        std::unique_lock lock(root->node_mtx);
         if (root == NIL) {
-            ptr p = std::make_shared<TreeNode<T, U> >(key, val);
+            ptr p = MakeNode::Cnode<TreeNode<T, U>, T, U>(this->pool, key, val); 
             this->node_cnt += 1;
             succeed = p;
             flag = true;
@@ -203,7 +202,6 @@ private :
     }
 
     ptr eraseimple(ptr root, T key) {
-        std::unique_lock lock(root->node_mtx);
         if (root == NIL) {
             return NIL;
         }
@@ -238,6 +236,7 @@ private :
         else return findimple(root->rchild, key);
     }
 
+    M_pool *pool = M_pool::Creat_Pool(2048);
     ptr root;
     mfunction<bool(int, int)> cmp;
     long long node_cnt;

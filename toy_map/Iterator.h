@@ -1,16 +1,16 @@
 /*************************************************************************
-	> File Name: Iterator.h
+	> File Name: 2.h
 	> Author:Xin 
 	> Mail:2923262959@qq.com 
-	> Created Time: Sat 27 Jul 2024 03:29:52 PM CST
+	> Created Time: Thu 19 Sep 2024 07:59:22 PM CST
  ************************************************************************/
 
-#ifndef _ITERATOR_H
-#define _ITERATOR_H
+#ifndef _2_H
+#define _2_H
 
 #include <iostream>
 #include <memory>
-#include <shared_mutex>
+#include "M_Pool.h"
 
 #define NIL (__NIL<T, U>)
 #define RED 0
@@ -19,31 +19,35 @@
 
 template<typename T, typename U>
 struct TreeNode;
+class MakeNode;
 
 template<typename T, typename U>
-static std::shared_ptr<TreeNode<T, U> > __NIL = std::make_shared<TreeNode<T, U> >(T(), U(), BLACK);
+static TreeNode<T, U> *__NIL = new TreeNode<T, U>(T(), U(), BLACK, nullptr, nullptr);
 
 template<typename T, typename U>
 struct TreeNode {
-    TreeNode(T key, U val, int color = RED, std::shared_ptr<TreeNode<T, U> >lchild = NIL,
-         std::shared_ptr<TreeNode<T, U> >rchild = NIL) :
+    TreeNode(T key, U val, int color = RED, TreeNode<T, U> *lchild = NIL,
+         TreeNode<T, U> *rchild = NIL) :
     key(key, val), color(color), lchild(lchild), rchild(rchild), father(NIL), height(1) {}
-    TreeNode<T, U> &operator=(U val) {
-        this->key.second = val;
-        return *this;
-    }
     std::pair<T, U> key;
-    std::weak_ptr<TreeNode<T, U> > father;
-    std::shared_ptr<TreeNode<T, U> > lchild, rchild;
+    TreeNode<T, U> *father;
+    TreeNode<T, U> *lchild, *rchild;
     int color;
     int height;
-    mutable std::shared_mutex node_mtx;
 };
 
+class MakeNode {
+public :
+    template<typename Node, typename ...ARGS>
+    static Node *Cnode(M_pool *pool, ARGS ...args) {
+        void *mem = M_pool::Pool_Malloc(pool, sizeof(Node));
+        return new(mem) Node(std::forward<ARGS>(args)...);
+    }
+};
 
 template<typename T, typename U, typename Node>
 class IteratorHelper {
-    using ptr = std::shared_ptr<Node>;
+    using ptr = Node *;
 public :
     static ptr get_next(ptr p) {
         if (p->rchild != NIL) {
@@ -51,10 +55,10 @@ public :
             while (p->lchild != NIL) p = p->lchild;
             return p;
         }
-        ptr parent = p->father.lock();
+        ptr parent = p->father;
         while (parent != NIL && parent->rchild == p) {
-            p = p->father.lock();
-            parent = p->father.lock();
+            p = p->father;
+            parent = p->father;
         }
         return parent;
     }
@@ -73,9 +77,9 @@ class Iterator {
     using self = Iterator<T, U, if_const, Node>;
 
 public :
-    Iterator(std::shared_ptr<Node> node) : node(node) {}
+    Iterator(Node *node) : node(node) {}
     Node &operator*() const {
-        return *static_cast<std::shared_ptr<Node> >(node);
+        return *static_cast<Node *>(node);
     }
 
     ptr operator->() {
@@ -85,7 +89,7 @@ public :
         return &((*(*this)).key);
     }
 
-    ref operator++() {
+    self operator++() {
         this->node = helper::get_next(this->node);
         return *this;
     }
@@ -95,7 +99,7 @@ public :
         return iter;
     }
 
-    ref operator--() {
+    self operator--() {
         this->node = helper::get_predecessor(this->node);
         return *this;
     }
@@ -132,6 +136,7 @@ public :
     }
 
 private :
-    std::shared_ptr<Node> node;
+    Node *node;
 };
+
 #endif

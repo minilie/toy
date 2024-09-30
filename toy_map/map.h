@@ -10,6 +10,7 @@
 
 #include "BRTree.h"
 #include "AVLTree.h"
+#include "BTree.h"
 
 template<typename T, typename U, typename COMP = std::less<T>, class TreeType = BRTree<T, U, COMP> >
 class map {
