@@ -112,15 +112,12 @@ TEST(erase, key) { // test key erase
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
     }
-    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
-    // m.output();
     auto iter = m.begin();
     for (int i = 0, I = m.size() / 2; i < I; i++) {
         auto q = iter++;
         m.erase(q->first);
     }
     
-    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 }
@@ -141,15 +138,11 @@ TEST(erase, one_iter) { // tset one iterator erase
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
     }
-    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     auto iter = m.begin();
     auto size = m.size();
-    // m.output();
     for (int i = 0; i < size / 2; i++) {
         m.erase(iter++);
     }
-    // m.output();
-    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
@@ -172,13 +165,10 @@ TEST(erase, two_iter) { // test range iterator erase
         std::pair<T_key, T_val> p =  std::make_pair(x, y);
         m.insert(p);
     }
-    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     auto iter = m.begin();
     auto size = m.size();
     for (int i = 0; i < size / 2; i++) iter++;
-                       std::cout << "begin val : " << m.begin()->first << "   iter val : " << iter->first << std::endl;
     m.erase(m.begin(), iter);
-    std::cout << "----------------m.size = " << m.size() << "---------------" << std::endl;
     bool testanswer = testcomp<T_key, T_val, T_cmp, T_treetype<T_key, T_val, T_cmp> >(m);
     EXPECT_NE(0, testanswer); // Test if the elements are all in order
 
