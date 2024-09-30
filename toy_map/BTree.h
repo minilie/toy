@@ -59,6 +59,10 @@ public :
             return iterator(temp, temp->key[0].first);
         }
     }
+    static iterator get_next(iterator &p) {
+        p = p.node->tree->find(p.val);
+        return __get_next(p);
+    }
 
     static iterator __get_pre(iterator &p) {
         if (p.node == p.node->tree->root) {
@@ -83,7 +87,6 @@ public :
             return iterator(temp, temp->key[temp->n - 1].first);
         }
     }
-
     static iterator get_pre(iterator &p) {
         p = p.node->tree->find(p.val);
         return __get_pre(p);
@@ -210,7 +213,7 @@ public :
 
     BTree &operator=(const BTree &obj) {
         this->root = obj.root;
-        return *this; // TODO
+        return *this; 
     }
     U &operator[](T key) {
         iterator p = this->find(key);
@@ -291,7 +294,7 @@ public :
         return ;
     }
 
-// private :
+private :
     iterator findimple(ptr root, T val) {
         if (root == nullptr) return iterator(nullptr);
         int pos = 0;
@@ -338,12 +341,12 @@ public :
         }
         for (int i = root->n; i >= pos; i--) {
             root->key[i + 1]  = root->key[i];
-            root->next[i + 1] = root->next[i]; // TODO
+            root->next[i + 1] = root->next[i];
             if (root->next[i + 1] != nullptr) {
                 root->next[i + 1]->fapos = i + 1;
-                root->next[i + 1]->father = root; // can be erase ?
+                root->next[i + 1]->father = root; 
             }
-        } // TODO
+        } 
         root->key[pos] = child->key[spos];
         root->next[pos] = node1;
         root->next[pos + 1] = node2;
@@ -387,7 +390,7 @@ public :
         }
         int pos = 0;
         while (pos < root->n && root->key[pos].first < val.first) pos += 1;
-        if (pos < root->n && root->key[pos].first == val.first) { // TODO
+        if (pos < root->n && root->key[pos].first == val.first) { 
             root->key[pos] = val;
             op = iterator(root, val.first);
             return root;
@@ -427,7 +430,7 @@ public :
         root->next[pos + 1]->key[0] = root->key[pos];
         root->key[pos] = root->next[pos]->key[root->next[pos]->n - 1];
         root->next[pos + 1]->next[0] = root->next[pos]->next[root->next[pos]->n];
-        //
+        
         if (root->next[pos + 1]->next[0] != nullptr) {
             root->next[pos + 1]->next[0]->fapos = 0;
             root->next[pos + 1]->next[0]->father = root->next[pos + 1];
@@ -443,7 +446,7 @@ public :
         root->next[pos]->n += 1;
         root->key[pos] = root->next[pos + 1]->key[0];
         root->next[pos]->next[root->next[pos]->n] = root->next[pos + 1]->next[0];
-        //
+        
         if (root->next[pos]->next[root->next[pos]->n] != nullptr) {
             root->next[pos]->next[root->next[pos]->n]->fapos = root->next[pos]->n;
             root->next[pos]->next[root->next[pos]->n]->father= root->next[pos];
@@ -483,8 +486,6 @@ public :
             }
         }
         node->n += root->next[pos + 1]->n;
-        // free(root->next[pos]);
-        // free(root->next[pos + 1]);
         root->next[pos] = nullptr;
         root->next[pos + 1] = nullptr;
         for (int i = pos + 1; i <= root->n; i++) {
@@ -561,7 +562,6 @@ public :
         }
         if (this->root->next[0]->n == 0) {
             ptr p = this->root->next[0]->next[0];
-            // free(this->root->next[0]);
             this->root->next[0] = nullptr;
             this->root->next[0] = p;
         }
@@ -605,8 +605,9 @@ public :
 
     M_pool *pool = M_pool::Creat_Pool(2048);
     mfunction<bool(T, U)> cmp;
-    ptr root; // virtual root
     long long node_cnt;
+public :
+    ptr root; // virtual root
 };
 
 
