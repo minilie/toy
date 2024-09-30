@@ -60,55 +60,35 @@ public :
         }
     }
 
-    static iterator get_next(iterator &p) {
-        p = p.node->tree->find(p.val);
-        return __get_next(p);
-    }
-/*
-    static iterator get_next(iterator &p) {
-        if (p.node->father == nullptr) return p;
-        if (p.node->next[p.pos + 1] != nullptr) {
-            Node *temp = p.node->next[p.pos + 1];
-            while (temp->next[0] != nullptr) temp = temp->next[0];
-            return temp;
+    static iterator __get_pre(iterator &p) {
+        if (p.node == p.node->tree->root) {
+            return p;
         }
-        if (p.pos < p.node->n - 1) {
-            return iterator(p.node, p.pos + 1);
-        } else {
-            if (p.node->fapos < p.node->father->n - 1) {
-            // if (p.node->father != nullptr && p.node->father->next[p.node->fapos + 1] != nullptr) {
-                return iterator(p.node->father, p.node->fapos);
+        if (p.node->next[0] == nullptr) {
+
+            if (p.pos > 0) {
+                return iterator(p.node, p.node->key[p.pos - 1].first);
             }
-            else {
-                ptr temp = p.node;
-                // while (temp->father != nullptr && temp->father->next[temp->fapos + 1] == nullptr) temp = temp->father;
-                while (temp->father != nullptr && temp->fapos == temp->father->n) temp = temp->father;
-                if (temp->father == nullptr) return temp;
-                return iterator(temp->father, temp->fapos);
-            }
-        }
-    }
-*/
-    static iterator get_pre(iterator &p) {
-        if (p.node->next[p.pos] != nullptr) {
-            Node *temp = p.node->next[p.pos];
-            while (temp->next[temp->n] != nullptr) temp = temp->next[temp->n];
-            return temp;
-        }
-        else if (p.pos > 0) {
-            return iterator(p.node, p.pos + 1);
-        } else {
             if (p.node->fapos > 0) {
-            // if (p.node->father->next[p.node->fapos + 1] != nullptr) {
-                return iterator(p.node->father, p.node->fapos);
+                return iterator(p.node->father, p.node->father->key[p.node->fapos].first);
             } else {
                 ptr temp = p.node;
-                // while (temp->father != nullptr && temp->father->next[temp->fapos + 1] == nullptr) temp = temp->father;
                 while (temp->father != nullptr && temp->fapos == 0) temp = temp->father;
-                return iterator(temp->father, temp->fapos);
+                return iterator(temp->father, temp->father->key[temp->fapos].first);
             }
+        } 
+        else {
+            ptr temp = p.node->next[p.pos - 1];
+            while (temp != nullptr && temp->next[temp->n] != nullptr) temp = temp->next[temp->n];
+            return iterator(temp, temp->key[temp->n - 1].first);
         }
     }
+
+    static iterator get_pre(iterator &p) {
+        p = p.node->tree->find(p.val);
+        return __get_pre(p);
+    }
+
 };
 
 template<typename T, typename U, bool if_const, typename Node>
